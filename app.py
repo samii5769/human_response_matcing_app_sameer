@@ -55,9 +55,50 @@ with col1:
 with col2:
     mentor_file = st.file_uploader("Upload Mentor Data", type=['csv', 'xlsx', 'pdf'])
 
+#  Detects file type and loads it into a Pandas DataFrame
+def load_data(file):
+    file_name = file.name.lower()
+    
+    try:
+        if file_name.endswith('.csv'):
+            return pd.read_csv(file)
+            
+        elif file_name.endswith('.xlsx'):
+            # Requires 'openpyxl' engine
+            return pd.read_excel(file, engine='openpyxl')
+            
+        elif file_name.endswith('.pdf'):
+            # Extract tables from PDF
+            with pdfplumber.open(file) as pdf:
+                all_rows = []
+                for page in pdf.pages:
+                    table = page.extract_table()
+                    if table:
+                        all_rows.extend(table)
+                
+                if all_rows:
+                    # Assume the first row extracted is the header
+                    df = pd.DataFrame(all_rows[1:], columns=all_rows[0])
+                    # Clean up any purely empty rows/columns from PDF extraction artifacts
+                    df.dropna(how='all', inplace=True)
+                    return df
+                else:
+                    st.error(f" Could not find a readable table in {file.name}.")
+                    return None
+    except Exception as e:
+        st.error(f"Error reading {file.name}: {e}")
+        return None
 if coachee_file and mentor_file:
-    if st.button("🚀 Run Matching Algorithm", type="primary"):
+    if st.button("Run Matching Algorithm", type="primary"):
         with st.spinner("Analyzing text and calculating optimal matches..."):
+            
+            # --- NEW DATA LOADING ---
+            coachee_df = load_data(coachee_file)
+            mentor_df = load_data(mentor_file)
+            
+            # Check if data loaded successfully before proceeding
+            if coachee_df is None or mentor_df is None:
+                st.stop() # Stops execution if a file couldn't be read
             
             # Load Data
             coachee_df = pd.read_csv(coachee_file)
