@@ -7,7 +7,7 @@ import io
 import pdfplumber
 
 # --- PAGE SETUP ---
-st.set_page_config(page_title="Human pair matching", layout="wide")
+st.set_page_config(page_title="Human Pair matching", layout="wide")
 st.title(" Human pair Matching Algorithm")
 st.markdown("Upload your human responsce datasets for pair matching.")
 
